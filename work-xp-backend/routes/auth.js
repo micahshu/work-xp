@@ -41,17 +41,21 @@ router.get('/callback', async (req, res) => {
       headers: { Authorization: `Bearer ${access_token}` },
     });
 
+
     const user = userRes.data.data;
+    // Get primary workspace GID
+    const workspace_gid = user.workspaces && user.workspaces.length > 0 ? user.workspaces[0].gid : null;
 
     const stmt = db.prepare(`
-      INSERT INTO users (asana_gid, name, email, access_token, refresh_token, token_expiry, created_at)
-      VALUES (@asana_gid, @name, @email, @access_token, @refresh_token, @token_expiry, @created_at)
+      INSERT INTO users (asana_gid, name, email, access_token, refresh_token, token_expiry, created_at, workspace_gid)
+      VALUES (@asana_gid, @name, @email, @access_token, @refresh_token, @token_expiry, @created_at, @workspace_gid)
       ON CONFLICT(asana_gid) DO UPDATE SET
         name=excluded.name,
         email=excluded.email,
         access_token=excluded.access_token,
         refresh_token=excluded.refresh_token,
-        token_expiry=excluded.token_expiry
+        token_expiry=excluded.token_expiry,
+        workspace_gid=excluded.workspace_gid
     `);
 
     stmt.run({
@@ -62,14 +66,35 @@ router.get('/callback', async (req, res) => {
       refresh_token,
       token_expiry: Date.now() + expires_in * 1000, // Expiry time in ms
       created_at: new Date().toISOString(),
+      workspace_gid
     });
 
-    res.send('Authentication successful! You can close this tab.');
+    req.session.user = {
+    asana_gid: user.gid,
+    name: user.name,
+    email: user.email
+  };
+  res.redirect(process.env.FRONTEND_REDIRECT_URL || 'http://localhost:3000/');
   } catch (err) {
     console.error(err.response?.data || err.message);
     res.status(500).send('OAuth failed.');
   }
 });
-  
 
+router.get('/me', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+  res.json({ user: req.session.user });
+});
+
+router.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+    res.sendStatus(200);
+  });
+});
+
+
+  
 module.exports = router;
