@@ -47,15 +47,16 @@ router.get('/callback', async (req, res) => {
     const workspace_gid = user.workspaces && user.workspaces.length > 0 ? user.workspaces[0].gid : null;
 
     const stmt = db.prepare(`
-      INSERT INTO users (asana_gid, name, email, access_token, refresh_token, token_expiry, created_at, workspace_gid)
-      VALUES (@asana_gid, @name, @email, @access_token, @refresh_token, @token_expiry, @created_at, @workspace_gid)
+      INSERT INTO users (asana_gid, name, email, access_token, refresh_token, token_expiry, created_at, workspace_gid, onboarding_complete)
+      VALUES (@asana_gid, @name, @email, @access_token, @refresh_token, @token_expiry, @created_at, @workspace_gid, @onboarding_complete)
       ON CONFLICT(asana_gid) DO UPDATE SET
         name=excluded.name,
         email=excluded.email,
         access_token=excluded.access_token,
         refresh_token=excluded.refresh_token,
         token_expiry=excluded.token_expiry,
-        workspace_gid=excluded.workspace_gid
+        workspace_gid=excluded.workspace_gid,
+        onboarding_complete=users.onboarding_complete
     `);
 
     stmt.run({
@@ -66,7 +67,8 @@ router.get('/callback', async (req, res) => {
       refresh_token,
       token_expiry: Date.now() + expires_in * 1000, // Expiry time in ms
       created_at: new Date().toISOString(),
-      workspace_gid
+      workspace_gid,
+      onboarding_complete: 0 // Always set to 0 for new users
     });
 
     req.session.user = {
@@ -74,7 +76,7 @@ router.get('/callback', async (req, res) => {
     name: user.name,
     email: user.email
   };
-  res.redirect(process.env.FRONTEND_REDIRECT_URL || 'http://localhost:3000/');
+  res.redirect(process.env.FRONTEND_REDIRECT_URL || 'http://localhost:3000/login');
   } catch (err) {
     console.error(err.response?.data || err.message);
     res.status(500).send('OAuth failed.');
@@ -85,7 +87,12 @@ router.get('/me', (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Not logged in' });
   }
-  res.json({ user: req.session.user });
+  // Check if user has completed onboarding
+  const stmt = db.prepare('SELECT * FROM users WHERE asana_gid = ?');
+  const dbUser = stmt.get(req.session.user.asana_gid);
+  // hasProfile is true only if onboarding_complete is 1
+  const hasProfile = !!(dbUser && dbUser.onboarding_complete === 1);
+  res.json({ user: req.session.user, hasProfile });
 });
 
 router.post('/logout', (req, res) => {

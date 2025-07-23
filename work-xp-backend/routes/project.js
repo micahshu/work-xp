@@ -48,6 +48,11 @@ router.post('/set-project', async (req, res) => {
     console.log('User or access token not found:', asana_gid);
     return res.status(404).json({ error: 'User or access token not found' });
   }
+  // Check if project GID already exists
+  if (user.game_project_gid) {
+    console.log('Project GID already exists for user:', user.game_project_gid);
+    return res.json({ message: 'Project GID already exists', game_project_gid: user.game_project_gid });
+  }
   // Check if token is expired
   if (user.token_expiry && Date.now() > user.token_expiry) {
     // Refresh token
@@ -74,7 +79,6 @@ router.post('/set-project', async (req, res) => {
           workspace: user.workspace_gid,
           offset,
           limit: 50,
-
         }
       });
       if (response.data.errors) {

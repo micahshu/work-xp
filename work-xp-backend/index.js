@@ -4,7 +4,7 @@ const cors = require('cors');
 const sessionConfig = require('./sessionConfig');
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/project');
-
+const skillsRoutes = require('./routes/skills');
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +17,7 @@ app.use(cors({
 app.use(sessionConfig);
 app.use('/auth', authRoutes);
 app.use('/project', projectRoutes);
-
+app.use('/skills', skillsRoutes);
 app.get('/', (req, res) => {
   res.send('Work XP Backend is running!');
 });

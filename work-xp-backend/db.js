@@ -11,7 +11,9 @@ db.prepare(`
     refresh_token TEXT,
     token_expiry INTEGER,
     created_at TEXT,
-    workspace_gid TEXT
+    workspace_gid TEXT,
+    onboarding_complete INTEGER DEFAULT 0,
+    game_project_gid TEXT
   )
 `).run();
 
