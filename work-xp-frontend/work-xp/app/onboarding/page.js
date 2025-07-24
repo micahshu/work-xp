@@ -10,9 +10,9 @@ import { getCurrentUser } from "../../utils/api";
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user, setUser } = useUser();
+
 
   useEffect(() => {
     async function fetchUser() {
@@ -22,27 +22,17 @@ export default function OnboardingPage() {
     if (!user) fetchUser();
   }, [user, setUser]);
 
+  // Redirect if user has already completed onboarding
+  useEffect(() => {
+    if (user && user.onboarding_complete) {
+      router.replace("/");
+    }
+  }, [user, router]);
+
   const handleNext = () => setStep(step + 1);
   const handleBack = () => setStep(step - 1);
 
-  const handleFinish = async () => {
-    setLoading(true);
-    // Send onboarding data to backend
-    await fetch("http://localhost:8080/auth/complete-onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(formData),
-    });
-    // Fetch latest user info and update context
-    const res = await fetch("http://localhost:8080/auth/me", { credentials: "include" });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.user) setUser(data.user);
-    }
-    setLoading(false);
-    router.replace("/dashboard");
-  };
+
 
   return (
     <div className="p-8 max-w-md mx-auto">
@@ -50,10 +40,19 @@ export default function OnboardingPage() {
         <Step1 data={formData} onChange={setFormData} onNext={handleNext} />
       )}
       {step === 2 && (
-        <Step2 data={formData} onChange={setFormData} onNext={handleNext} onBack={handleBack} />
+        <Step2
+          data={formData}
+          onChange={updated => setFormData(prev => ({ ...prev, ...updated }))}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
       )}
       {step === 3 && (
-        <Step3 data={formData} onChange={setFormData} onBack={handleBack} onFinish={handleFinish} loading={loading} />
+        <Step3
+          data={formData}
+          onChange={updated => setFormData(prev => ({ ...prev, ...updated }))}
+          onBack={handleBack}
+        />
       )}
     </div>
   );

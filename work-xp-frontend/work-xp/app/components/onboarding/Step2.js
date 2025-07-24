@@ -58,6 +58,9 @@ export default function Step2({ data, onChange, onNext, onBack }) {
                 body: JSON.stringify({ asana_gid: user.asana_gid, sections: curatedSections })
               });
               const data = await res.json();
+              if (data.message) {
+                if (typeof onChange === 'function') onChange({ skills: curatedSections });
+              }
               alert(data.message || data.error);
             }}
           >
