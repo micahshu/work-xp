@@ -13,7 +13,8 @@ db.prepare(`
     created_at TEXT,
     workspace_gid TEXT,
     onboarding_complete INTEGER DEFAULT 0,
-    game_project_gid TEXT
+    game_project_gid TEXT,
+    webhook_id TEXT
   )
 `).run();
 
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS skills (
   xp INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  active INTEGER DEFAULT 1,
   FOREIGN KEY (user_gid) REFERENCES users(asana_gid),
   UNIQUE(user_gid, section_gid)  
 )

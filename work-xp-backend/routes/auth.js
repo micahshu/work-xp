@@ -87,12 +87,14 @@ router.get('/me', (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Not logged in' });
   }
-  // Check if user has completed onboarding
   const stmt = db.prepare('SELECT * FROM users WHERE asana_gid = ?');
   const dbUser = stmt.get(req.session.user.asana_gid);
-  // hasProfile is true only if onboarding_complete is 1
-  const hasProfile = !!(dbUser && dbUser.onboarding_complete === 1);
-  res.json({ user: req.session.user, hasProfile });
+  if (!dbUser) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  // Merge onboarding_complete into the session user object
+  const userWithOnboarding = { ...req.session.user, onboarding_complete: dbUser.onboarding_complete };
+  res.json({ user: userWithOnboarding });
 });
 
 router.post('/logout', (req, res) => {
