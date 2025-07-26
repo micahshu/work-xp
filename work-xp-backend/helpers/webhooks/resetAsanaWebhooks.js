@@ -1,7 +1,7 @@
 const axios = require('axios');
-const db = require('../db');
+const db = require('../../db');
 
-const WEBHOOK_TARGET_URL = "https://ee86a5733612.ngrok-free.app/webhook/asana"; // <-- Update this each time ngrok restarts
+const WEBHOOK_TARGET_URL = "https://sadly-humane-goat.ngrok.app/webhook/asana"; // <-- Update this each time ngrok restarts
 
 // Get all users with access tokens, project gids, and workspace gids
 const users = db.prepare('SELECT DISTINCT asana_gid, access_token, game_project_gid, workspace_gid FROM users WHERE access_token IS NOT NULL AND game_project_gid IS NOT NULL AND workspace_gid IS NOT NULL').all();
