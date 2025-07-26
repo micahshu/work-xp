@@ -3,7 +3,7 @@ const axios = require('axios');
 const db = require('../db');
 
 
-const WEBHOOK_TARGET_URL = "https://ee86a5733612.ngrok-free.app/webhook/asana";
+const WEBHOOK_TARGET_URL = "https://sadly-humane-goat.ngrok.app/webhook/asana";
 
 if (!WEBHOOK_TARGET_URL) {
   console.error('Missing required environment variables.');
@@ -12,15 +12,8 @@ if (!WEBHOOK_TARGET_URL) {
 }
 
 
-// Add webhook_id column to users table if not exists
-try {
-  db.prepare(`ALTER TABLE users ADD COLUMN webhook_id TEXT`).run();
-} catch (e) {
-  // Ignore if already exists
-}
 
-// Get all unique project GIDs and their access tokens
-const projects = db.prepare('SELECT DISTINCT game_project_gid, access_token FROM users WHERE game_project_gid IS NOT NULL AND access_token IS NOT NULL').all();
+
 
 async function registerWebhookForProject(projectGid, accessToken) {
   try {
@@ -57,10 +50,7 @@ async function registerWebhookForProject(projectGid, accessToken) {
   }
 }
 
-(async () => {
-  for (const row of projects) {
-    if (!row.game_project_gid || !row.access_token) continue;
-    await registerWebhookForProject(row.game_project_gid, row.access_token);
-  }
-  db.close();
-})();
+
+module.exports = {
+  registerWebhookForProject
+};

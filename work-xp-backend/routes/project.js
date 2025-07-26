@@ -85,12 +85,24 @@ router.post('/set-project', async (req, res) => {
       console.log('Project not found:', project_name);
       return res.status(404).json({ error: 'Project not found' });
     }
+    // Save project GID
     db.prepare(`UPDATE users SET game_project_gid = ? WHERE asana_gid = ?`).run(foundProject.gid, asana_gid);
     console.log('Project GID saved:', foundProject.gid);
-    res.json({ message: 'Project GID saved', game_project_gid: foundProject.gid });
+
+    // Register webhook for this user's project
+    const registerWebhook = require('../helpers/registerAsanaWebhook');
+    await registerWebhook.registerWebhookForProject(foundProject.gid, user.access_token);
+    console.log('Webhook registered for project:', foundProject.gid);
+
+    // Sync Asana sections to skills
+    const resyncSections = require('../helpers/resyncSections');
+    await resyncSections.resyncSectionsForUser(asana_gid);
+    console.log('Skills synced for user:', asana_gid);
+
+    res.json({ message: 'Project onboarding complete', game_project_gid: foundProject.gid });
   } catch (err) {
-    console.log('Error fetching or saving project:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch or save project' });
+    console.log('Error during onboarding:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to complete onboarding' });
   }
 });
 

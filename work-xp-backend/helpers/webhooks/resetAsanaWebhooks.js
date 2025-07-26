@@ -1,5 +1,5 @@
 const axios = require('axios');
-const db = require('../db');
+const db = require('../../db');
 
 const WEBHOOK_TARGET_URL = "https://sadly-humane-goat.ngrok.app/webhook/asana"; // <-- Update this each time ngrok restarts
 
