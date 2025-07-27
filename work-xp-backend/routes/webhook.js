@@ -1,5 +1,6 @@
 // webhook.js
 const handleSectionEvent = require('../eventHandlers/handleSectionEvent');
+const handleTaskEvent = require('../eventHandlers/handleTaskEvents');
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
@@ -24,6 +25,9 @@ router.post('/asana', (req, res) => {
     }
     if (event.resource.resource_type === 'section' && event.user && event.user.gid) {
       handleSectionEvent(event);
+    }
+    if (event.resource.resource_type === 'task' && event.user && event.user.gid) {
+      handleTaskEvent(event);
     }
   });
   res.status(200).end();

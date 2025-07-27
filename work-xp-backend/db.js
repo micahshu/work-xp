@@ -33,4 +33,25 @@ CREATE TABLE IF NOT EXISTS skills (
 )
 `).run();
 
+
+// Create the tasks table to track Asana tasks and link them to skills (sections)
+db.prepare(`
+CREATE TABLE IF NOT EXISTS tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_gid TEXT NOT NULL,
+  user_gid TEXT NOT NULL,
+  section_gid TEXT,
+  skill_id INTEGER,
+  task_name TEXT,
+  assignee_gid TEXT,
+  completed INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT,
+  due_on TEXT,
+  FOREIGN KEY (user_gid) REFERENCES users(asana_gid),
+  FOREIGN KEY (skill_id) REFERENCES skills(id),
+  UNIQUE(task_gid)
+)
+`).run();
+
 module.exports = db;
